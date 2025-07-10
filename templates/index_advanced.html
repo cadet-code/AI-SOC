@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberShield SOC - Advanced AI Security Operations Center</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-bg: #0a0e1a;
+            --secondary-bg: #1a1f2e;
+            --accent-blue: #00d4ff;
+            --accent-green: #00ff88;
+            --accent-red: #ff4757;
+            --accent-orange: #ffa502;
+            --text-primary: #ffffff;
+            --text-secondary: #b8c5d6;
+            --border-color: #2d3748;
+            --card-bg: rgba(26, 31, 46, 0.8);
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --shadow-glow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--primary-bg);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 25px 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .logo-text h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            background: var(--glass-bg);
+            border-radius: 25px;
+            border: 1px solid var(--border-color);
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            animation: statusPulse 2s infinite;
+        }
+
+        @keyframes statusPulse {
+            0%, 100% { 
+                box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.7);
+                transform: scale(1);
+            }
+            50% { 
+                box-shadow: 0 0 0 10px rgba(0, 255, 136, 0);
+                transform: scale(1.2);
+            }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 30px;
+            transition: all 0.4s ease;
+            animation: slideInLeft 0.6s ease-out;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-glow);
+            border-color: var(--accent-blue);
+        }
+
+        .stat-card.threats { border-left: 4px solid var(--accent-red); }
+        .stat-card.models { border-left: 4px solid var(--accent-green); }
+        .stat-card.health { border-left: 4px solid var(--accent-blue); }
+        .stat-card.response { border-left: 4px solid var(--accent-orange); }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--text-primary), var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
+        .card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: all 0.4s ease;
+            animation: slideInRight 0.6s ease-out;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-glow);
+            border-color: var(--accent-blue);
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .card-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 5px;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #00ff88 0%, #00d4ff 100%);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ffa502 0%, #ff4757 100%);
+            color: white;
+        }
+
+        .threat-feed {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .threat-item {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .threat-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--accent-red);
+            transition: width 0.3s ease;
+        }
+
+        .threat-item:hover {
+            transform: translateX(5px);
+            border-color: var(--accent-red);
+            box-shadow: 0 5px 20px rgba(255, 71, 87, 0.2);
+        }
+
+        .threat-item:hover::before {
+            width: 8px;
+        }
+
+        .threat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .threat-type {
+            font-weight: 600;
+            color: var(--accent-red);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .threat-severity {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .severity-high {
+            background: rgba(255, 71, 87, 0.2);
+            color: var(--accent-red);
+            border: 1px solid var(--accent-red);
+        }
+
+        .severity-medium {
+            background: rgba(255, 165, 2, 0.2);
+            color: var(--accent-orange);
+            border: 1px solid var(--accent-orange);
+        }
+
+        .severity-low {
+            background: rgba(0, 255, 136, 0.2);
+            color: var(--accent-green);
+            border: 1px solid var(--accent-green);
+        }
+
+        .threat-description {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+
+        .threat-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 20px;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--border-color);
+            border-radius: 50%;
+            border-top-color: var(--accent-blue);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        @media (max-width: 1200px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .logo-text h1 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div class="logo-text">
+                        <h1>CyberShield SOC</h1>
+                        <p>Advanced AI Security Operations Center</p>
+                    </div>
+                </div>
+                <div class="status-indicator">
+                    <div class="status-dot"></div>
+                    <span>SYSTEM OPERATIONAL</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Grid -->
+        <div class="stats-grid">
+            <div class="stat-card threats">
+                <div class="stat-value" id="activeThreats">0</div>
+                <div class="stat-label">Active Threats</div>
+            </div>
+
+            <div class="stat-card models">
+                <div class="stat-value" id="aiModels">5/5</div>
+                <div class="stat-label">AI Models Active</div>
+            </div>
+
+            <div class="stat-card health">
+                <div class="stat-value" id="systemHealth">98%</div>
+                <div class="stat-label">System Health</div>
+            </div>
+
+            <div class="stat-card response">
+                <div class="stat-value" id="responseTime">1.2s</div>
+                <div class="stat-label">Avg Response Time</div>
+            </div>
+        </div>
+
+        <!-- Main Dashboard Grid -->
+        <div class="dashboard-grid">
+            <div class="main-content">
+                <!-- Real-time Threat Feed -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-radar"></i>
+                            Real-time Threat Feed
+                        </div>
+                        <button class="btn btn-primary" onclick="refreshThreats()">
+                            <i class="fas fa-sync-alt"></i>
+                            Refresh
+                        </button>
+                    </div>
+                    <div class="threat-feed" id="threatFeed">
+                        <div class="loading" style="text-align: center; margin: 20px;"></div>
+                    </div>
+                </div>
+
+                <!-- AI Analysis Panel -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-robot"></i>
+                            AI Analysis
+                        </div>
+                        <button class="btn btn-success" onclick="runAIAnalysis()">
+                            <i class="fas fa-play"></i>
+                            Analyze
+                        </button>
+                    </div>
+                    <div id="aiAnalysis">
+                        <div style="text-align: center; color: var(--text-secondary); margin: 20px;">
+                            <i class="fas fa-brain" style="font-size: 3rem; margin-bottom: 15px; color: var(--accent-blue);"></i>
+                            <p>AI models ready for threat analysis</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- System Status -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-server"></i>
+                            System Status
+                        </div>
+                    </div>
+                    <div id="systemStatus">
+                        <div style="margin-bottom: 15px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span>CPU Usage</span>
+                                <span id="cpuUsage">23%</span>
+                            </div>
+                            <div style="background: var(--secondary-bg); height: 8px; border-radius: 4px; overflow: hidden;">
+                                <div style="background: var(--accent-green); height: 100%; width: 23%; transition: width 0.3s ease;"></div>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span>Memory Usage</span>
+                                <span id="memoryUsage">45%</span>
+                            </div>
+                            <div style="background: var(--secondary-bg); height: 8px; border-radius: 4px; overflow: hidden;">
+                                <div style="background: var(--accent-blue); height: 100%; width: 45%; transition: width 0.3s ease;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-bolt"></i>
+                            Quick Actions
+                        </div>
+                    </div>
+                    <div style="display: grid; gap: 10px;">
+                        <button class="btn btn-primary" onclick="startThreatHunting()">
+                            <i class="fas fa-search"></i>
+                            Threat Hunting
+                        </button>
+                        <button class="btn btn-success" onclick="trainModels()">
+                            <i class="fas fa-cogs"></i>
+                            Train Models
+                        </button>
+                        <button class="btn btn-warning" onclick="runUEBAAnalysis()">
+                            <i class="fas fa-user-shield"></i>
+                            UEBA Analysis
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="dashboard-grid">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-chart-line"></i>
+                        Threat Trends
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="threatChart"></canvas>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-chart-pie"></i>
+                        Threat Distribution
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="threatDistribution"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification System -->
+    <div class="notification" id="notification">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <i class="fas fa-info-circle" style="color: var(--accent-blue);"></i>
+            <span id="notificationText">System notification</span>
+        </div>
+    </div>
+
+    <script>
+        // Socket.IO Connection
+        const socket = io();
+        
+        socket.on('connect', function() {
+            console.log('Connected to server');
+            showNotification('Connected to CyberShield SOC', 'success');
+        });
+        
+        socket.on('new_threat', function(threat) {
+            addThreatToFeed(threat);
+            updateStats();
+            showNotification(`New threat detected: ${threat.threat_type}`, 'warning');
+        });
+
+        // Threat Feed Management
+        function addThreatToFeed(threat) {
+            const threatFeed = document.getElementById('threatFeed');
+            const threatItem = document.createElement('div');
+            threatItem.className = 'threat-item';
+            
+            const severityClass = `severity-${threat.severity.toLowerCase()}`;
+            
+            threatItem.innerHTML = `
+                <div class="threat-header">
+                    <span class="threat-type">${threat.threat_type.toUpperCase()}</span>
+                    <span class="threat-severity ${severityClass}">${threat.severity}</span>
+                </div>
+                <div class="threat-description">${threat.description}</div>
+                <div class="threat-meta">
+                    <span>${threat.source_ip} → ${threat.destination_ip}</span>
+                    <span>${new Date(threat.timestamp).toLocaleTimeString()}</span>
+                </div>
+            `;
+            
+            threatFeed.insertBefore(threatItem, threatFeed.firstChild);
+            
+            if (threatFeed.children.length > 10) {
+                threatFeed.removeChild(threatFeed.lastChild);
+            }
+        }
+
+        function updateStats() {
+            const activeThreats = document.getElementById('activeThreats');
+            const currentCount = parseInt(activeThreats.textContent);
+            activeThreats.textContent = currentCount + 1;
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notificationText');
+            
+            notificationText.textContent = message;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        function refreshThreats() {
+            fetch('/api/threats')
+                .then(response => response.json())
+                .then(threats => {
+                    const threatFeed = document.getElementById('threatFeed');
+                    threatFeed.innerHTML = '';
+                    threats.forEach(threat => addThreatToFeed(threat));
+                    showNotification('Threat feed refreshed', 'success');
+                });
+        }
+
+        function runAIAnalysis() {
+            const aiAnalysis = document.getElementById('aiAnalysis');
+            aiAnalysis.innerHTML = '<div class="loading"></div>';
+            
+            fetch('/api/ai/analyze', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    threat_type: 'malware',
+                    severity: 'high',
+                    source_ip: '192.168.1.100',
+                    description: 'Suspicious network activity detected'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                aiAnalysis.innerHTML = `
+                    <div style="color: var(--accent-green); margin-bottom: 15px;">
+                        <i class="fas fa-check-circle"></i> Analysis Complete
+                    </div>
+                    <div style="color: var(--text-secondary); font-size: 0.9rem;">
+                        <p><strong>Threat Type:</strong> ${data.threat_type}</p>
+                        <p><strong>Severity:</strong> ${data.severity}</p>
+                        <p><strong>Risk Score:</strong> ${(data.risk_score * 100).toFixed(1)}%</p>
+                        <p><strong>Confidence:</strong> ${(data.confidence * 100).toFixed(1)}%</p>
+                    </div>
+                `;
+                showNotification('AI analysis completed', 'success');
+            });
+        }
+
+        function startThreatHunting() {
+            showNotification('Threat hunting initiated', 'info');
+        }
+
+        function trainModels() {
+            showNotification('Model training started', 'info');
+        }
+
+        function runUEBAAnalysis() {
+            showNotification('UEBA analysis running', 'info');
+        }
+
+        // Initialize Charts
+        function initCharts() {
+            const threatCtx = document.getElementById('threatChart').getContext('2d');
+            new Chart(threatCtx, {
+                type: 'line',
+                data: {
+                    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
+                    datasets: [{
+                        label: 'Threats Detected',
+                        data: [12, 19, 15, 25, 22, 30],
+                        borderColor: '#00d4ff',
+                        backgroundColor: 'rgba(0, 212, 255, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#ffffff' }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            ticks: { color: '#b8c5d6' },
+                            grid: { color: '#2d3748' }
+                        },
+                        x: {
+                            ticks: { color: '#b8c5d6' },
+                            grid: { color: '#2d3748' }
+                        }
+                    }
+                }
+            });
+
+            const distributionCtx = document.getElementById('threatDistribution').getContext('2d');
+            new Chart(distributionCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Malware', 'Phishing', 'DDoS', 'Brute Force', 'Insider'],
+                    datasets: [{
+                        data: [30, 25, 20, 15, 10],
+                        backgroundColor: [
+                            '#ff4757',
+                            '#ffa502',
+                            '#00d4ff',
+                            '#a55eea',
+                            '#00ff88'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#ffffff' }
+                        }
+                    }
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initCharts();
+            refreshThreats();
+        });
+    </script>
+</body>
+</html> 
